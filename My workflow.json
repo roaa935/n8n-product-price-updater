@@ -1,0 +1,258 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "chatIds": "1639327468"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "da7b35c8-3095-4640-88f2-d586ada91a84",
+      "name": "Telegram Trigger",
+      "webhookId": "bc431cf6-edc6-4c9b-8153-b4fd421565e7",
+      "credentials": {
+        "telegramApi": {
+          "id": "8eSbND7OFTu0sulI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1AMX7uzUs1hYSC6V9QVSBx3Zx-n6LbvaecrENEz2v6vQ",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Products",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Price",
+              "displayName": "Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمود 3",
+              "displayName": "العمود 3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمود 4",
+              "displayName": "العمود 4",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمود 5",
+              "displayName": "العمود 5",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "العمود 6",
+              "displayName": "العمود 6",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1217dec4-6615-4604-b649-acd1d22bf583",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7hKlY1DDnSH4Q3zf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1AMX7uzUs1hYSC6V9QVSBx3Zx-n6LbvaecrENEz2v6vQ/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Products",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "40bc9eaf-4c34-456c-94e9-c5d7a755af5c",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7hKlY1DDnSH4Q3zf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst message = $input.first().json.message;\nconst text = message?.text ?? '';\n\nconst match = text.trim().match(/^(.+?)\\s+(\\d+(?:\\.\\d+)?)%$/);\n\nif (!match) {\n  throw new Error('Invalid format. Use: Lenovo 10%');\n}\n\nreturn [{\n  json: {\n    productName: match[1].trim(),\n    percentage: Number(match[2]),\n    chatId: message.chat.id\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        0
+      ],
+      "id": "1636c17c-c47e-4ac3-92d1-33254704b2f0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst row = $input.first().json;\nconst request = $('Parse Telegram Message').first().json;\n\nconst currentPrice = Number(row.Price);\n\nif (!Number.isFinite(currentPrice)) {\n  throw new Error('Invalid product price');\n}\n\nconst newPrice = Number(\n  (currentPrice * (1 + request.percentage / 100)).toFixed(2)\n);\n\nreturn [{\n  json: {\n    Product: row.Product,\n    Price: newPrice,\n    productName: request.productName,\n    percentage: request.percentage,\n    chatId: request.chatId\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "57141c1a-ddcf-41a1-acfb-b05632071c66",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bc486232-5d0b-4726-9d83-b85ebceb0f97",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b1ffd7584ef7617f59db0547cf03c4ef5749e8682649a4b1d5dea037c9ef4b81"
+  },
+  "nodeGroups": [],
+  "id": "uhyo0IvQ68wUdkDd",
+  "tags": []
+}
